@@ -10,6 +10,7 @@ inline void init_ncurses() {
     raw();
     keypad(stdscr, TRUE);
     noecho();
+    nonl();
     curs_set(0);
 }
 

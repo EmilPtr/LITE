@@ -1,5 +1,6 @@
 #ifndef BUFFER_H
 #define BUFFER_H
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -11,6 +12,12 @@ struct cursor {
     int end_col;
 };
 
+inline void log(std::string s) {
+    std::ofstream file("log");
+    file << s;
+    file.close();
+}
+
 inline cursor c = cursor(0, 0, 0, 0);
 
 inline void move_u(const std::vector<std::string> &buffer) {
@@ -19,7 +26,8 @@ inline void move_u(const std::vector<std::string> &buffer) {
         c.end_row -= 1;
     }
     if (c.start_col >= buffer[c.start_row].size()) {
-        c.start_col = buffer[c.start_row].size() - 1;
+        c.start_col = buffer[c.start_row].size();
+        c.end_col = c.start_col;
     }
 }
 
@@ -29,7 +37,8 @@ inline void move_d(const std::vector<std::string> &buffer) {
         c.end_row += 1;
     }
     if (c.start_col >= buffer[c.start_row].size()) {
-        c.start_col = buffer[c.start_row].size() - 1;
+        c.start_col = buffer[c.start_row].size();
+        c.end_col = c.start_col;
     }
 }
 
@@ -53,9 +62,25 @@ inline bool is_special_key(const int ch, std::vector<std::string> &buffer) {
             buffer[c.start_row].erase(c.start_col-1, 1);
             move_l();
         }
+        else if (c.start_col == 0 && (c.start_col == c.end_col || c.start_row == c.end_row) && c.start_row != 0) {
+            std::string temp = buffer[c.start_row];
+            buffer.erase(buffer.begin() + c.start_row);
+            c.start_col = buffer[c.start_row-1].size();
+            c.end_col = c.start_col;
+            buffer[c.start_row-1].append(temp);
+            move_u(buffer);
+        }
         return true;
     }
-    if (ch == KEY_ENTER) {
+    if (ch == KEY_ENTER || ch == '\n' || ch == '\r') {
+        if (c.start_col == buffer[c.start_row].size()) {
+            const std::string empty = "";
+            buffer.insert(buffer.begin()+c.start_row+1, empty);
+            move_d(buffer);
+        }
+        else if (c.start_col == c.end_col || c.start_row == c.end_row) {
+
+        }
         return true;
     }
     if (ch >= 1 && ch <= 26) { // Detects any Ctrl+ combos
@@ -81,6 +106,9 @@ inline bool is_special_key(const int ch, std::vector<std::string> &buffer) {
         move_r(buffer);
         return true;
     }
+    if (!(ch >= 32 && ch <= 126)) {
+        return true;
+    }
     return false;
 }
 
@@ -89,6 +117,7 @@ inline std::vector<std::string> initialize_buffer() {
 }
 
 inline void modify_buffer(const int ch, std::vector<std::string> &buffer) {
+    log(std::to_string(c.start_row)+" "+std::to_string(c.start_col)+"\n"+std::to_string(c.end_row)+" "+std::to_string(c.end_col));
     if (is_special_key(ch, buffer)) {
         return;
     }
@@ -118,5 +147,7 @@ inline void print_buffer(const std::vector<std::string> &buffer) {
         printw("\n");
     }
 }
+
+
 
 #endif //BUFFER_H
