@@ -15,7 +15,7 @@ void init_ncurses() {
 
 void print_header(int cols) {
     attron(A_STANDOUT); // Enable the highlighting attribute
-    std::string header = " nano++ v0.1";
+    std::string header = " LITE v0.1";
     for (int i = 0; i < cols-12; i++) {
         header.append(" ");
     }
