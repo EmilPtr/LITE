@@ -1,3 +1,13 @@
+/******************************************************************************************
+ * main.cpp
+ * Created by Emil on XXXX-XX-XX
+ * This file is the main event loop of the editor
+ * This file will be kept minimal, and most of the heavy-lifting will be done by headers
+ ******************************************************************************************/
+
+#include <string>
+#include <vector>
+#include <ncurses.h>
 #include "lib/helper_functions.h"
 #include "lib/buffer.h"
 

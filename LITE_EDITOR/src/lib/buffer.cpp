@@ -1,9 +1,10 @@
-#ifndef BUFFER_H
-#define BUFFER_H
+#include <ncurses.h>
 #include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
+
+#include "buffer.h"
 
 struct cursor {
     int start_row;
@@ -12,15 +13,15 @@ struct cursor {
     int end_col;
 };
 
-inline void log(std::string s) {
+void log(std::string s) {
     std::ofstream file("log");
     file << s;
     file.close();
 }
 
-inline cursor c = cursor(0, 0, 0, 0);
+cursor c = cursor(0, 0, 0, 0);
 
-inline void move_u(const std::vector<std::string> &buffer) {
+void move_u(const std::vector<std::string> &buffer) {
     if (c.start_row != 0) {
         c.start_row -= 1;
         c.end_row -= 1;
@@ -31,7 +32,7 @@ inline void move_u(const std::vector<std::string> &buffer) {
     }
 }
 
-inline void move_d(const std::vector<std::string> &buffer) {
+void move_d(const std::vector<std::string> &buffer) {
     if (c.start_row != buffer.size()-1) {
         c.start_row += 1;
         c.end_row += 1;
@@ -42,21 +43,21 @@ inline void move_d(const std::vector<std::string> &buffer) {
     }
 }
 
-inline void move_r(const std::vector<std::string> &buffer) {
+void move_r(const std::vector<std::string> &buffer) {
     if (c.start_col != buffer[c.start_row].size()) {
         c.start_col += 1;
         c.end_col += 1;
     }
 }
 
-inline void move_l() {
+void move_l() {
     if (c.start_col != 0) {
         c.start_col -= 1;
         c.end_col -= 1;
     }
 }
 
-inline bool is_special_key(const int ch, std::vector<std::string> &buffer) {
+bool is_special_key(const int ch, std::vector<std::string> &buffer) {
     if (ch == KEY_BACKSPACE) {
         if (c.start_col != 0 && (c.start_col == c.end_col || c.start_row == c.end_row)) {
             buffer[c.start_row].erase(c.start_col-1, 1);
@@ -112,11 +113,11 @@ inline bool is_special_key(const int ch, std::vector<std::string> &buffer) {
     return false;
 }
 
-inline std::vector<std::string> initialize_buffer() {
+std::vector<std::string> initialize_buffer() {
     return {"I HAVE STUFF!!!!", "okay maybe not"};
 }
 
-inline void modify_buffer(const int ch, std::vector<std::string> &buffer) {
+void modify_buffer(const int ch, std::vector<std::string> &buffer) {
     log(std::to_string(c.start_row)+" "+std::to_string(c.start_col)+"\n"+std::to_string(c.end_row)+" "+std::to_string(c.end_col));
     if (is_special_key(ch, buffer)) {
         return;
@@ -129,7 +130,7 @@ inline void modify_buffer(const int ch, std::vector<std::string> &buffer) {
     move_r(buffer);
 }
 
-inline void print_buffer(const std::vector<std::string> &buffer) {
+void print_buffer(const std::vector<std::string> &buffer) {
     for (int i = 0; i < buffer.size(); i++) {
         for (int j = 0; j < buffer[i].length()+1; j++) {
             if (j == buffer[i].length() && i >= c.start_row && i <= c.end_row && j >= c.start_col && j <= c.end_col) {
@@ -149,5 +150,3 @@ inline void print_buffer(const std::vector<std::string> &buffer) {
 }
 
 
-
-#endif //BUFFER_H

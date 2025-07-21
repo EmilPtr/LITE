@@ -6,7 +6,7 @@ find_package(Curses REQUIRED)
 
 include_directories(${CURSES_INCLUDE_DIR})
 add_executable(nano_editor src/main.cpp
-        src/lib/helper_functions.h
-        src/lib/buffer.h)
+        src/lib/helper_functions.cpp
+        src/lib/buffer.cpp)
 
 target_link_libraries(nano_editor ${CURSES_LIBRARIES})
