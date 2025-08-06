@@ -2,9 +2,9 @@
 #define HELPER_FUNCTIONS_H
 
 
-void init_ncurses();
+void initNcurses();
 
 
-void print_header(int cols);
+void printHeader(int cols);
 
 #endif //HELPER_FUNCTIONS_H

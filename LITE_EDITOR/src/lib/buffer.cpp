@@ -1,3 +1,10 @@
+/*************************************************************************************************************
+ * buffer.cpp
+ * Created by Emil on 2025-07-15
+ * This file contains all the main buffer functionality, such as keypresses, editing, selecting, and loading
+ * buffer.h is its respective header file
+ *************************************************************************************************************/
+
 #include <ncurses.h>
 #include <fstream>
 #include <iostream>
@@ -7,10 +14,10 @@
 #include "buffer.h"
 
 struct cursor {
-    int start_row;
-    int start_col;
-    int end_row;
-    int end_col;
+    int startRow;
+    int startCol;
+    int endRow;
+    int endCol;
 };
 
 void log(std::string s) {
@@ -19,71 +26,95 @@ void log(std::string s) {
     file.close();
 }
 
-cursor c = cursor(0, 0, 0, 0);
+cursor c = cursor(0, 0, 0, 0); // Start the cursor at the top left
 
-void move_u(const std::vector<std::string> &buffer) {
-    if (c.start_row != 0) {
-        c.start_row -= 1;
-        c.end_row -= 1;
+// Determine if a selection is active
+bool isSelectionActive() {
+    return (c.startCol != c.endCol && c.startRow != c.endRow);
+}
+
+// Move the cursor up by one row
+void moveUp(const std::vector<std::string> &buffer) {
+    if (c.startRow != 0) {
+        c.startRow -= 1;
+        c.endRow -= 1;
     }
-    if (c.start_col >= buffer[c.start_row].size()) {
-        c.start_col = buffer[c.start_row].size();
-        c.end_col = c.start_col;
+    if (c.startCol >= buffer[c.startRow].size()) {
+        c.startCol = buffer[c.startRow].size();
+        c.endCol = c.startCol;
     }
 }
 
-void move_d(const std::vector<std::string> &buffer) {
-    if (c.start_row != buffer.size()-1) {
-        c.start_row += 1;
-        c.end_row += 1;
+// Move the cursor down by one row
+void moveDown(const std::vector<std::string> &buffer) {
+    if (c.startRow != buffer.size()-1) {
+        c.startRow += 1;
+        c.endRow += 1;
     }
-    if (c.start_col >= buffer[c.start_row].size()) {
-        c.start_col = buffer[c.start_row].size();
-        c.end_col = c.start_col;
-    }
-}
-
-void move_r(const std::vector<std::string> &buffer) {
-    if (c.start_col != buffer[c.start_row].size()) {
-        c.start_col += 1;
-        c.end_col += 1;
+    if (c.startCol >= buffer[c.startRow].size()) {
+        c.startCol = buffer[c.startRow].size();
+        c.endCol = c.startCol;
     }
 }
 
-void move_l() {
-    if (c.start_col != 0) {
-        c.start_col -= 1;
-        c.end_col -= 1;
+// Move the cursor right by one column
+void moveRight(const std::vector<std::string> &buffer) {
+    if (c.startCol != buffer[c.startRow].size()) {
+        c.startCol += 1;
+        c.endCol += 1;
     }
 }
 
-bool is_special_key(const int ch, std::vector<std::string> &buffer) {
+// Move the cursor left by one column
+void moveLeft() {
+    if (c.startCol != 0) {
+        c.startCol -= 1;
+        c.endCol -= 1;
+    }
+}
+
+/**
+ * Function that checks if the key detected using getch() was a special character,
+ * for instance, an escape sequence. The if-statement chain detects which special char was
+ * detected, and performs the action associated with it, such as Backspace to delete a character in the buffer.
+ * @param ch The character to be checked
+ * @param buffer The current text buffer
+ * @return a boolean, returns true if it's a special key
+ */
+bool isSpecialKey(const int ch, std::vector<std::string> &buffer) {
+
     if (ch == KEY_BACKSPACE) {
-        if (c.start_col != 0 && (c.start_col == c.end_col || c.start_row == c.end_row)) {
-            buffer[c.start_row].erase(c.start_col-1, 1);
-            move_l();
+        // Remove a character normally
+        if (c.startCol != 0 && !isSelectionActive()) {
+            buffer[c.startRow].erase(c.startCol-1, 1);
+            moveLeft();
         }
-        else if (c.start_col == 0 && (c.start_col == c.end_col || c.start_row == c.end_row) && c.start_row != 0) {
-            std::string temp = buffer[c.start_row];
-            buffer.erase(buffer.begin() + c.start_row);
-            c.start_col = buffer[c.start_row-1].size();
-            c.end_col = c.start_col;
-            buffer[c.start_row-1].append(temp);
-            move_u(buffer);
+        // If the cursor is at the beginning of a line, append the contents of the
+        // deleted line to the line above
+        else if (c.startCol == 0 && !isSelectionActive() && c.startRow != 0) {
+            std::string temp = buffer[c.startRow];
+            buffer.erase(buffer.begin() + c.startRow);
+            c.startCol = buffer[c.startRow-1].size();
+            c.endCol = c.startCol;
+            buffer[c.startRow-1].append(temp);
+            moveUp(buffer);
         }
         return true;
     }
+
     if (ch == KEY_ENTER || ch == '\n' || ch == '\r') {
-        if (c.start_col == buffer[c.start_row].size()) {
-            const std::string empty = "";
-            buffer.insert(buffer.begin()+c.start_row+1, empty);
-            move_d(buffer);
+        // If the enter key was pressed at the end of a line
+        if (c.startCol == buffer[c.startRow].size() && !isSelectionActive()) {
+            const std::string empty;
+            buffer.insert(buffer.begin()+c.startRow+1, empty);
+            moveDown(buffer);
         }
-        else if (c.start_col == c.end_col || c.start_row == c.end_row) {
+        else if (!isSelectionActive()) {
 
         }
         return true;
     }
+
     if (ch >= 1 && ch <= 26) { // Detects any Ctrl+ combos
         if (ch == 24) {
             endwin();
@@ -91,55 +122,70 @@ bool is_special_key(const int ch, std::vector<std::string> &buffer) {
         }
         return true;
     }
+
     if (ch == KEY_UP) {
-        move_u(buffer);
+        moveUp(buffer);
         return true;
     }
+
     if (ch == KEY_DOWN) {
-        move_d(buffer);
+        moveDown(buffer);
         return true;
     }
+
     if (ch == KEY_LEFT) {
-        move_l();
+        moveLeft();
         return true;
     }
+
     if (ch == KEY_RIGHT) {
-        move_r(buffer);
+        moveRight(buffer);
         return true;
     }
+
     if (!(ch >= 32 && ch <= 126)) {
         return true;
     }
+
     return false;
 }
 
-std::vector<std::string> initialize_buffer() {
+// Initialize the buffer
+std::vector<std::string> initializeBuffer() {
     return {"I HAVE STUFF!!!!", "okay maybe not"};
 }
-
-void modify_buffer(const int ch, std::vector<std::string> &buffer) {
-    log(std::to_string(c.start_row)+" "+std::to_string(c.start_col)+"\n"+std::to_string(c.end_row)+" "+std::to_string(c.end_col));
-    if (is_special_key(ch, buffer)) {
+/**
+ * Insert a character into the buffer at the position of the cursor.
+ * @param ch The character to insert into the buffer
+ * @param buffer The current text buffer
+ */
+void modifyBuffer(const int ch, std::vector<std::string> &buffer) {
+    log(std::to_string(c.startRow)+" "+std::to_string(c.startCol)+"\n"+std::to_string(c.endRow)+" "+std::to_string(c.endCol));
+    if (isSpecialKey(ch, buffer)) {
         return;
     }
-    if (c.start_col != c.end_col || c.start_row != c.end_row) { // If there is a larger selection
+    if (isSelectionActive()) { // If there is a larger selection
         return;
     }
-    const char reg_char = static_cast<char>(ch);
-    buffer[c.start_row].insert(c.start_col, 1, reg_char);
-    move_r(buffer);
+    const char regChar = static_cast<char>(ch);
+    buffer[c.startRow].insert(c.startCol, 1, regChar);
+    moveRight(buffer);
 }
 
-void print_buffer(const std::vector<std::string> &buffer) {
+/**
+ * Prints out a buffer to the ncurses stdscr
+ * @param buffer The current text buffer
+ */
+void printBuffer(const std::vector<std::string> &buffer) {
     for (int i = 0; i < buffer.size(); i++) {
         for (int j = 0; j < buffer[i].length()+1; j++) {
-            if (j == buffer[i].length() && i >= c.start_row && i <= c.end_row && j >= c.start_col && j <= c.end_col) {
+            if (j == buffer[i].length() && i >= c.startRow && i <= c.endRow && j >= c.startCol && j <= c.endCol) {
                 attron(A_STANDOUT);
                 printw("%c", ' ');
                 attroff(A_STANDOUT);
                 continue;
             }
-            if (i >= c.start_row && i <= c.end_row && j >= c.start_col && j <= c.end_col) {
+            if (i >= c.startRow && i <= c.endRow && j >= c.startCol && j <= c.endCol) {
                 attron(A_STANDOUT);
                 printw("%c", buffer[i][j]);
                 attroff(A_STANDOUT);

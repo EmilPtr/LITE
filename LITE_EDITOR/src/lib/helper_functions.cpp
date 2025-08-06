@@ -3,7 +3,7 @@
 
 #include "helper_functions.h"
 
-void init_ncurses() {
+void initNcurses() {
     // Initialize ncurses
     initscr();
     raw();
@@ -13,10 +13,10 @@ void init_ncurses() {
     curs_set(0);
 }
 
-void print_header(int cols) {
+void printHeader(int cols) {
     attron(A_STANDOUT); // Enable the highlighting attribute
     std::string header = " LITE v0.1";
-    for (int i = 0; i < cols-12; i++) {
+    for (int i = 0; i < cols-10; i++) {
         header.append(" ");
     }
     printw(header.c_str());

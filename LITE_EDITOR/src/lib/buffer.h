@@ -1,10 +1,10 @@
 #ifndef BUFFER_H
 #define BUFFER_H
 
-std::vector<std::string> initialize_buffer();
+std::vector<std::string> initializeBuffer();
 
-void modify_buffer(int ch, std::vector<std::string> &buffer);
+void modifyBuffer(int ch, std::vector<std::string> &buffer);
 
-void print_buffer(const std::vector<std::string> &buffer);
+void printBuffer(const std::vector<std::string> &buffer);
 
 #endif //BUFFER_H
